@@ -107,6 +107,22 @@ type alias State =
 --------------------------------------------------------------------------------
 -- EXPORTED --------------------------------------------------------------------
 --------------------------------------------------------------------------------
+new_state : State
+new_state =
+   {
+      memory = (Dict.empty),
+      user_types = (Dict.empty),
+      sequences = (Dict.empty),
+      code = [],
+      program_counter = 0,
+      allocated_data = 0,
+      last_choice_index = 0,
+      available_options = [],
+      memorized_target = (PointerValue [""]),
+
+      last_instruction_effect = MustContinue
+   }
+
 value_to_bool : Value -> Bool
 value_to_bool value =
    case value of
@@ -141,12 +157,15 @@ value_to_string value =
             (StringText result) -> result
             (AugmentedText rich_text) ->
                (String.concat
-                  (List.map (value_to_string) rich_text.content)
+                  (List.map
+                     (\text_value -> (value_to_string (TextValue text_value)))
+                     rich_text.content
+                  )
                )
 
             NewlineText -> "\n"
 
-      _ -> (StringText "")
+      _ -> "Cannot turn this value into string without cast."
 
 value_to_dict : Value -> (Dict.Dict String Value)
 value_to_dict value =
@@ -177,7 +196,10 @@ append_text_content base addition =
                   (AugmentedText
                      {text_data |
                         content =
-                           (List.append base.content other_text_data.content)
+                           (List.append
+                              text_data.content
+                              other_text_data.content
+                           )
                      }
                   )
                else
@@ -185,8 +207,8 @@ append_text_content base addition =
                      {text_data |
                         content =
                            (List.append
-                              base.content
-                              (List.singleton other_text_data)
+                              text_data.content
+                              (List.singleton addition)
                            )
                      }
                   )
@@ -195,7 +217,7 @@ append_text_content base addition =
                (AugmentedText
                   {text_data |
                      content =
-                        (List.append base.content (List.singleton other))
+                        (List.append text_data.content (List.singleton other))
                   }
                )
 
@@ -233,7 +255,7 @@ get_default state type_name =
       other ->
          case (Dict.get other state.user_types) of
             (Just default) -> default
-            Nothing -> (StringValue ("Unknown type '" + other + "'"))
+            Nothing -> (StringValue ("Unknown type '" ++ other ++ "'"))
 
 apply_at_address : (
       (List String) ->
@@ -254,15 +276,29 @@ apply_at_address address fun memory =
             next_element
             (\maybe_value ->
                case maybe_value of
-                  (Just value) ->
+                  (Just (StructureValue value)) ->
                      (Just
-                        (apply_at_address
-                           next_address
-                           fun
-                           (value_to_dict value)
+                        (StructureValue
+                           (apply_at_address
+                              next_address
+                              (fun)
+                              value
+                           )
                         )
                      )
 
-                  Nothing -> Nothing
+                  (Just (ListValue value)) ->
+                     (Just
+                        (ListValue
+                           (apply_at_address
+                              next_address
+                              (fun)
+                              value
+                           )
+                        )
+                     )
+
+                  _ -> Nothing
             )
+            memory
          )

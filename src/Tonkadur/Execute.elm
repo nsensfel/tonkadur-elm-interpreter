@@ -80,6 +80,7 @@ extra_instruction : (
 extra_instruction name parameters state =
    -- No extra instruction supported.
    -- TODO: error report.
+   state
 
 initialize : (
       String ->
@@ -103,6 +104,7 @@ initialize type_name address state =
             )
             state.memory
          )
+      -- TODO: detect allocated memory for special handling.
    }
 
 prompt_command : (
@@ -168,6 +170,7 @@ remove address state =
             (\last_addr dict -> (Dict.remove last_addr dict))
             state.memory
          )
+      -- TODO: detect allocated memory for special handling.
    }
 
 resolve_choice : Tonkadur.Types.State -> Tonkadur.Types.State

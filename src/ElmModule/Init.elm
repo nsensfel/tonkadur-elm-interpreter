@@ -15,4 +15,4 @@ import Struct.Model
 init : Struct.Flags.Type -> (Struct.Model.Type, (Cmd Struct.Event.Type))
 init flags =
    -- TODO: read flags and request story.
-   (model, Cmd.none)
+   ((Struct.Model.new), Cmd.none)

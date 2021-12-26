@@ -13,7 +13,7 @@ import Struct.Flags
 import Struct.Model
 import Struct.Event
 
-main : (Program Shared.Struct.Flags.Type Struct.Model.Type Struct.Event.Type)
+main : (Program Struct.Flags.Type Struct.Model.Type Struct.Event.Type)
 main =
    (Browser.element
       {
