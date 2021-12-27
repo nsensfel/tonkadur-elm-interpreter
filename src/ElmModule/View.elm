@@ -8,6 +8,7 @@ import Html.Attributes
 import Struct.Event
 import Struct.Model
 
+import View.PlayerInput
 --------------------------------------------------------------------------------
 -- LOCAL -----------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -22,5 +23,18 @@ view model =
          (Html.Attributes.class "fullscreen-module")
       ]
       [
+         (Html.div
+            [
+               (Html.Attributes.class "tonkadur-errors")
+            ]
+            model.ui.displayed_errors
+         ),
+         (Html.div
+            [
+               (Html.Attributes.class "tonkadur-texts")
+            ]
+            model.ui.displayed_texts
+         ),
+         (View.PlayerInput.get_html model)
       ]
    )

@@ -97,7 +97,8 @@ type alias State =
       available_options : (List Option),
       memorized_target : Value,
 
-      last_instruction_effect : InstructionEffect
+      last_instruction_effect : InstructionEffect,
+      freed_addresses : (List String)
    }
 
 --------------------------------------------------------------------------------
@@ -120,7 +121,8 @@ new_state =
       available_options = [],
       memorized_target = (PointerValue [""]),
 
-      last_instruction_effect = MustContinue
+      last_instruction_effect = MustContinue,
+      freed_addresses = []
    }
 
 value_to_bool : Value -> Bool
@@ -302,3 +304,6 @@ apply_at_address address fun memory =
             )
             memory
          )
+
+allow_continuing : State -> State
+allow_continuing state = {state | last_instruction_effect = MustContinue}

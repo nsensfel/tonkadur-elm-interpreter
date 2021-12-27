@@ -160,7 +160,10 @@ newline : Tonkadur.Types.State -> Tonkadur.Types.Value
 newline state = (TextValue Newline)
 
 next_allocable_address : Tonkadur.Types.State -> Tonkadur.Types.Value
-next_allocable_address state = (IntValue state.next_allocable_address)
+next_allocable_address state =
+   if (List.isEmpty state.freed_addresses)
+   then (PointerValue [(".alloc." ++ (String.fromInt state.allocated_data))])
+   else (PointerValue [state.freed_addresses[0]])
 
 operation : (
       Tonkadur.Types.State ->

@@ -6,6 +6,8 @@ module ElmModule.Update exposing (update)
 import Struct.Event
 import Struct.Model
 
+import Update.Story
+
 --------------------------------------------------------------------------------
 -- LOCAL -----------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -21,3 +23,5 @@ update : (
 update event model =
    case event of
       Struct.Event.None -> (model, Cmd.none)
+      (Struct.Event.ChoiceSelected ix) ->
+         ((Update.Story.select_choice ix model), Cmd.none)

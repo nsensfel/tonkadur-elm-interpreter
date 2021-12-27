@@ -89,23 +89,51 @@ initialize : (
       Tonkadur.Types.State
    )
 initialize type_name address state =
-   {state |
-      memory =
-         (Tonkadur.Types.apply_at_address
-            (Tonkadur.Types.value_to_list
-               (Tonkadur.Compute.compute state address)
-            )
-            (\last_addr dict ->
-               (Dict.insert
-                  last_addr
-                  (Tonkadur.Types.get_default state type_name)
-                  dict
+   let
+      new_state =
+         {state |
+            memory =
+               (Tonkadur.Types.apply_at_address
+                  (Tonkadur.Types.value_to_list
+                     (Tonkadur.Compute.compute state address)
+                  )
+                  (\last_addr dict ->
+                     (Dict.insert
+                        last_addr
+                        (Tonkadur.Types.get_default state type_name)
+                        dict
+                     )
+                  )
+                  state.memory
                )
-            )
-            state.memory
-         )
-      -- TODO: detect allocated memory for special handling.
-   }
+            -- TODO: detect allocated memory for special handling.
+         }
+   in
+      case address of
+         [single_element] ->
+            if (String.startsWith ".alloc." single_element)
+            then
+               if
+               (
+                  single_element
+                  == (".alloc." ++ (String.fromInt new_state.allocated_data))
+               )
+               then
+                  {new_state |
+                     allocated_data = new_state.allocated_data + 1
+                  }
+               else
+                  {new_state |
+                     freed_addresses =
+                        (List.filter
+                           (\addr -> (addr /= single_element))
+                           new_state.freed_addresses
+                        )
+                  }
+
+            else new_state
+
+         _ -> new_state
 
 prompt_command : (
       Tonkadur.Types.PromptInstructionData ->
@@ -161,17 +189,31 @@ remove : (
       Tonkadur.Types.State
    )
 remove address state =
-   {state |
-      memory =
-         (Tonkadur.Types.apply_at_address
-            (Tonkadur.Types.value_to_list
-               (Tonkadur.Compute.compute state address)
-            )
-            (\last_addr dict -> (Dict.remove last_addr dict))
-            state.memory
-         )
-      -- TODO: detect allocated memory for special handling.
-   }
+   let
+      new_state =
+         {state |
+            memory =
+               (Tonkadur.Types.apply_at_address
+                  (Tonkadur.Types.value_to_list
+                     (Tonkadur.Compute.compute state address)
+                  )
+                  (\last_addr dict -> (Dict.remove last_addr dict))
+                  state.memory
+               )
+         }
+   in
+      case address of
+         [single_element] ->
+            if (String.startsWith ".alloc." single_element)
+            then
+               {new_state |
+                  freed_addresses =
+                     (single_element :: new_state.freed_addresses)
+               }
+            else new_state
+
+         _ -> new_state
+
 
 resolve_choice : Tonkadur.Types.State -> Tonkadur.Types.State
 resolve_choice state =
