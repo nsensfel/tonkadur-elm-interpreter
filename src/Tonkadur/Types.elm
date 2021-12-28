@@ -1,8 +1,11 @@
 module Tonkadur.Types exposing (..)
 
 -- Elm -------------------------------------------------------------------------
+import Array
 import Dict
 import List
+
+import Random
 
 --------------------------------------------------------------------------------
 -- TYPES -----------------------------------------------------------------------
@@ -32,20 +35,20 @@ type Value =
 
 type Option =
    Choice RichText
-   | Event (String, (List Value))
+   | Event String (List Value)
 
 type Computation =
-   AddTextEffect (String, (List Computation), (List Computation))
+   AddTextEffect String (List Computation) (List Computation)
    | Address Computation
-   | Cast (String, String, Computation)
-   | Constant (String, String)
-   | ExtraComputation (String, (List Computation))
-   | IfElse (Computation, Computation, Computation)
+   | Cast String String Computation
+   | Constant String String
+   | ExtraComputation String (List Computation)
+   | IfElse Computation Computation Computation
    | LastChoiceIndex
    | Newline
    | NextAllocableAddress
-   | Operation (String, Computation, Computation)
-   | RelativeAddress (Computation, Computation)
+   | Operation String Computation Computation
+   | RelativeAddress Computation Computation
    | Size Computation
    | Text (List Computation)
    | ValueOf Computation
@@ -57,40 +60,41 @@ type alias PromptInstructionData =
       address : Computation,
       label : Computation
    }
+
 type Instruction =
-   AddEventOption (String, (List Computation))
+   AddEventOption String (List Computation)
    | AddTextOption Computation
-   | Assert (Computation, Computation)
+   | Assert Computation Computation
    | Display Computation
    | End
-   | ExtraInstruction (String, (List Computation))
-   | Initialize (String, Computation)
+   | ExtraInstruction String (List Computation)
+   | Initialize String Computation
    | PromptCommand PromptInstructionData
    | PromptInteger PromptInstructionData
    | PromptString PromptInstructionData
    | Remove Computation
    | ResolveChoice
    | SetPC Computation
-   | SetRandom (Computation, Computation, Computation)
-   | Set (Computation, Computation)
+   | SetRandom Computation Computation Computation
+   | Set Computation Computation
 
 type InstructionEffect =
    MustContinue
    | MustEnd
-   | MustPromptCommand (Value, Value, Value)
-   | MustPromptInteger (Value, Value, Value)
-   | MustPromptString (Value, Value, Value)
+   | MustPromptCommand Value Value Value
+   | MustPromptInteger Value Value Value
+   | MustPromptString Value Value Value
    | MustPromptChoice
    | MustDisplay Value
    | MustDisplayError Value
-   | MustExtraEffect (String, (List Value))
+   | MustExtraEffect String (List Value)
 
 type alias State =
    {
       memory : (Dict.Dict String Value),
       user_types : (Dict.Dict String Value),
       sequences : (Dict.Dict String Int),
-      code : (List Instruction),
+      code : (Array.Array Instruction),
       program_counter : Int,
       allocated_data : Int,
       last_choice_index : Int,
@@ -98,7 +102,8 @@ type alias State =
       memorized_target : Value,
 
       last_instruction_effect : InstructionEffect,
-      freed_addresses : (List String)
+      freed_addresses : (List String),
+      random_seed : Random.Seed
    }
 
 --------------------------------------------------------------------------------
@@ -108,13 +113,13 @@ type alias State =
 --------------------------------------------------------------------------------
 -- EXPORTED --------------------------------------------------------------------
 --------------------------------------------------------------------------------
-new_state : State
-new_state =
+new_state : Int -> State
+new_state random_seed =
    {
       memory = (Dict.empty),
       user_types = (Dict.empty),
       sequences = (Dict.empty),
-      code = [],
+      code = (Array.empty),
       program_counter = 0,
       allocated_data = 0,
       last_choice_index = 0,
@@ -122,7 +127,8 @@ new_state =
       memorized_target = (PointerValue [""]),
 
       last_instruction_effect = MustContinue,
-      freed_addresses = []
+      freed_addresses = [],
+      random_seed = (Random.initialSeed random_seed)
    }
 
 value_to_bool : Value -> Bool
@@ -307,3 +313,7 @@ apply_at_address address fun memory =
 
 allow_continuing : State -> State
 allow_continuing state = {state | last_instruction_effect = MustContinue}
+
+compare_pointers : (List String) -> (List String) -> Int
+compare_pointers p0 p1 = 0
+   -- TODO: implement

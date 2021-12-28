@@ -31,6 +31,6 @@ type alias Type =
 new : Type
 new =
    {
-      tonkadur = (Tonkadur.Types.new_state),
+      tonkadur = (Tonkadur.Types.new_state 42),
       ui = (Struct.UI.new)
    }

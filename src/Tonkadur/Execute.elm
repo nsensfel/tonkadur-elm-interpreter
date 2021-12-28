@@ -3,6 +3,7 @@ module Tonkadur.Execute exposing (execute)
 -- Elm -------------------------------------------------------------------------
 import Dict
 import List
+import Random
 
 -- Tonkadur --------------------------------------------------------------------
 import Tonkadur.Types
@@ -18,7 +19,7 @@ import Tonkadur.Compute
 --------------------------------------------------------------------------------
 increment_program_counter : Tonkadur.Types.State -> Tonkadur.Types.State
 increment_program_counter state =
-   {state | program_counter = program_counter + 1}
+   {state | program_counter = state.program_counter + 1}
 
 ---- INSTRUCTIONS --------------------------------------------------------------
 add_event_option : (
@@ -29,7 +30,10 @@ add_event_option : (
    )
 add_event_option name parameters state =
    (Tonkadur.Types.append_option
-      (Event name (List.map (Tonkadur.Compute.compute state) parameters))
+      (Tonkadur.Types.Event
+         name
+         (List.map (Tonkadur.Compute.compute state) parameters)
+      )
       state
    )
 
@@ -40,7 +44,11 @@ add_text_option : (
    )
 add_text_option label state =
    (Tonkadur.Types.append_option
-      (Choice (Tonkadur.Compute.compute label state))
+      (Tonkadur.Types.Choice
+         (Tonkadur.Types.value_to_text_or_string
+            (Tonkadur.Compute.compute state label)
+         )
+      )
       state
    )
 
@@ -61,7 +69,7 @@ display : (
       Tonkadur.Types.Computation ->
       Tonkadur.Types.State ->
       Tonkadur.Types.State
-)
+   )
 display label state =
    -- TODO: where do we put displayed values?
    state
@@ -90,13 +98,15 @@ initialize : (
    )
 initialize type_name address state =
    let
+      address_as_list =
+         (Tonkadur.Types.value_to_address
+            (Tonkadur.Compute.compute state address)
+         )
       new_state =
          {state |
             memory =
                (Tonkadur.Types.apply_at_address
-                  (Tonkadur.Types.value_to_list
-                     (Tonkadur.Compute.compute state address)
-                  )
+                  address_as_list
                   (\last_addr dict ->
                      (Dict.insert
                         last_addr
@@ -109,8 +119,8 @@ initialize type_name address state =
             -- TODO: detect allocated memory for special handling.
          }
    in
-      case address of
-         [single_element] ->
+      case address_as_list of
+         (single_element :: []) ->
             if (String.startsWith ".alloc." single_element)
             then
                if
@@ -144,7 +154,7 @@ prompt_command prompt_data state =
    {state |
       memorized_target = (Tonkadur.Compute.compute state prompt_data.address),
       last_instruction_effect =
-         (PromptCommand
+         (Tonkadur.Types.MustPromptCommand
             (Tonkadur.Compute.compute state prompt_data.min)
             (Tonkadur.Compute.compute state prompt_data.max)
             (Tonkadur.Compute.compute state prompt_data.label)
@@ -160,7 +170,7 @@ prompt_string prompt_data state =
    {state |
       memorized_target = (Tonkadur.Compute.compute state prompt_data.address),
       last_instruction_effect =
-         (PromptString
+         (Tonkadur.Types.MustPromptString
             (Tonkadur.Compute.compute state prompt_data.min)
             (Tonkadur.Compute.compute state prompt_data.max)
             (Tonkadur.Compute.compute state prompt_data.label)
@@ -176,7 +186,7 @@ prompt_integer prompt_data state =
    {state |
       memorized_target = (Tonkadur.Compute.compute state prompt_data.address),
       last_instruction_effect =
-         (PromptInteger
+         (Tonkadur.Types.MustPromptInteger
             (Tonkadur.Compute.compute state prompt_data.min)
             (Tonkadur.Compute.compute state prompt_data.max)
             (Tonkadur.Compute.compute state prompt_data.label)
@@ -190,20 +200,22 @@ remove : (
    )
 remove address state =
    let
+      address_as_list =
+         (Tonkadur.Types.value_to_address
+            (Tonkadur.Compute.compute state address)
+         )
       new_state =
          {state |
             memory =
                (Tonkadur.Types.apply_at_address
-                  (Tonkadur.Types.value_to_list
-                     (Tonkadur.Compute.compute state address)
-                  )
+                  address_as_list
                   (\last_addr dict -> (Dict.remove last_addr dict))
                   state.memory
                )
          }
    in
-      case address of
-         [single_element] ->
+      case address_as_list of
+         (single_element :: []) ->
             if (String.startsWith ".alloc." single_element)
             then
                {new_state |
@@ -217,13 +229,13 @@ remove address state =
 
 resolve_choice : Tonkadur.Types.State -> Tonkadur.Types.State
 resolve_choice state =
-   {state | last_instruction_effect = PromptChoice}
+   {state | last_instruction_effect = Tonkadur.Types.MustPromptChoice}
 
 set_pc : (
       Tonkadur.Types.Computation ->
       Tonkadur.Types.State ->
       Tonkadur.Types.State
-)
+   )
 set_pc value state =
    {state |
       program_counter =
@@ -238,7 +250,7 @@ set_random : (
       Tonkadur.Types.Computation ->
       Tonkadur.Types.State ->
       Tonkadur.Types.State
-)
+   )
 set_random address min max state =
    let
       (value, next_random_seed) =
@@ -246,6 +258,8 @@ set_random address min max state =
             (Random.int
                (Tonkadur.Types.value_to_int
                   (Tonkadur.Compute.compute state min)
+               )
+               (Tonkadur.Types.value_to_int
                   (Tonkadur.Compute.compute state max)
                )
             )
@@ -255,10 +269,10 @@ set_random address min max state =
    {state |
       memory =
          (Tonkadur.Types.apply_at_address
-            (Tonkadur.Types.value_to_list
+            (Tonkadur.Types.value_to_address
                (Tonkadur.Compute.compute state address)
             )
-            (\last_addr dict -> (Dict.insert last_addr (IntValue value) dict))
+            (\last_addr dict -> (Dict.insert last_addr (Tonkadur.Types.IntValue value) dict))
             state.memory
          ),
 
@@ -270,12 +284,12 @@ set : (
       Tonkadur.Types.Computation ->
       Tonkadur.Types.State ->
       Tonkadur.Types.State
-)
+   )
 set address value state =
    {state |
       memory =
          (Tonkadur.Types.apply_at_address
-            (Tonkadur.Types.value_to_list
+            (Tonkadur.Types.value_to_address
                (Tonkadur.Compute.compute state address)
             )
             (\last_addr dict ->
@@ -295,52 +309,59 @@ set address value state =
 execute : (
       Tonkadur.Types.Instruction ->
       Tonkadur.Types.State ->
-      Tonkadur.Types.State ->
+      Tonkadur.Types.State
    )
 execute instruction state =
-   let new_state = {state | last_instruction_effect = Continue} in
+   let
+      new_state =
+         {state | last_instruction_effect = Tonkadur.Types.MustContinue}
+   in
    case instruction of
-      (AddEventOption name parameters) ->
+      (Tonkadur.Types.AddEventOption name parameters) ->
          (increment_program_counter
             (add_event_option name parameters new_state)
          )
 
-      (AddTextOption label) ->
+      (Tonkadur.Types.AddTextOption label) ->
          (increment_program_counter
-            (add_text_option name parameters new_state)
+            (add_text_option label new_state)
          )
 
-      (Assert condition label) ->
+      (Tonkadur.Types.Assert condition label) ->
          (increment_program_counter
             (assert condition label new_state)
          )
 
-      (Display label) ->
+      (Tonkadur.Types.Display label) ->
          (increment_program_counter (display label new_state))
 
-      End -> (end new_state)
-      (ExtraInstruction name parameters) ->
+      Tonkadur.Types.End -> (end new_state)
+      (Tonkadur.Types.ExtraInstruction name parameters) ->
          (extra_instruction name parameters new_state)
 
-      (Initialize type_name address) ->
+      (Tonkadur.Types.Initialize type_name address) ->
          (increment_program_counter
             (initialize type_name address new_state)
          )
-      (PromptCommand prompt_data) ->
+      (Tonkadur.Types.PromptCommand prompt_data) ->
          (increment_program_counter (prompt_command prompt_data new_state))
 
-      (PromptInteger prompt_data) ->
+      (Tonkadur.Types.PromptInteger prompt_data) ->
          (increment_program_counter (prompt_integer prompt_data new_state))
 
-      (PromptString prompt_data) ->
+      (Tonkadur.Types.PromptString prompt_data) ->
          (increment_program_counter (prompt_string prompt_data new_state))
 
-      (Remove address) -> (increment_program_counter (remove address new_state))
-      ResolveChoice -> (increment_program_counter (resolve_choice new_state))
-      (SetPC value) -> (set_pc value new_state)
-      (SetRandom address min max) ->
+      (Tonkadur.Types.Remove address) ->
+         (increment_program_counter (remove address new_state))
+
+      Tonkadur.Types.ResolveChoice ->
+         (increment_program_counter (resolve_choice new_state))
+
+      (Tonkadur.Types.SetPC value) -> (set_pc value new_state)
+      (Tonkadur.Types.SetRandom address min max) ->
          (increment_program_counter (set_random address min max new_state))
 
-      (Set address value) ->
+      (Tonkadur.Types.Set address value) ->
          (increment_program_counter (set address value new_state))
 

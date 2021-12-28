@@ -1,6 +1,5 @@
 module Update.Story exposing
    (
-      new,
       select_choice,
       input_string,
       input_integer,
@@ -8,15 +7,19 @@ module Update.Story exposing
    )
 
 -- Elm -------------------------------------------------------------------------
+import Array
 import Html
 
 -- Local Module ----------------------------------------------------------------
 import Struct.Event
 import Struct.Model
+import Struct.UI
 
 import Util.TonkadurToHtml
 
+-- Tonkadur --------------------------------------------------------------------
 import Tonkadur.Execute
+import Tonkadur.Types
 
 --------------------------------------------------------------------------------
 -- TYPES -----------------------------------------------------------------------
@@ -28,20 +31,21 @@ import Tonkadur.Execute
 step : Struct.Model.Type -> Struct.Model.Type
 step model =
    case model.tonkadur.last_instruction_effect of
-      MustContinue ->
-         (step
-            {model |
-               tonkadur =
-                  (Tonkadur.Execute.execute
-                     model.tonkadur.code[model.tonkadur.program_counter]
-                     model.tonkadur
-                  )
-            }
-         )
+      Tonkadur.Types.MustContinue ->
+         case (Array.get model.tonkadur.program_counter model.tonkadur.code) of
+            (Just instruction) ->
+               (step
+                  {model |
+                     tonkadur =
+                        (Tonkadur.Execute.execute instruction model.tonkadur)
+                  }
+               )
 
-      MustEnd -> model -- TODO
+            Nothing -> model -- TODO: error
 
-      (MustPromptCommand min max label) ->
+      Tonkadur.Types.MustEnd -> model -- TODO
+
+      (Tonkadur.Types.MustPromptCommand min max label) ->
          {model |
             tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
             ui =
@@ -52,7 +56,7 @@ step model =
                )
          }
 
-      (MustPromptInteger min max label) ->
+      (Tonkadur.Types.MustPromptInteger min max label) ->
          {model |
             tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
             ui =
@@ -63,7 +67,7 @@ step model =
                )
          }
 
-      (MustPromptString min max label) ->
+      (Tonkadur.Types.MustPromptString min max label) ->
          {model |
             tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
             ui =
@@ -74,21 +78,20 @@ step model =
                )
          }
 
-      MustPromptChoice ->
-         {model |
-            tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
-            ui =
+      Tonkadur.Types.MustPromptChoice ->
+         let (last_ix, new_ui) =
                (List.foldl
                   (\option (ix, ui) ->
                      case option of
-                        (Choice rich_text) ->
+                        (Tonkadur.Types.Choice rich_text) ->
                            (
                               (ix + 1),
                               (Struct.UI.display_choice
                                  ix
                                  (Util.TonkadurToHtml.convert
-                                    (TextValue rich_text)
+                                    (Tonkadur.Types.TextValue rich_text)
                                  )
+                                 ui
                               )
                            )
 
@@ -97,9 +100,13 @@ step model =
                   (0, model.ui)
                   model.tonkadur.available_options
                )
+         in
+         {model |
+            tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
+            ui = new_ui
          }
 
-      (MustDisplay text) ->
+      (Tonkadur.Types.MustDisplay text) ->
          (step
             {model |
                tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
@@ -111,7 +118,7 @@ step model =
             }
          )
 
-      (MustDisplayError text) ->
+      (Tonkadur.Types.MustDisplayError text) ->
          (step
             {model |
                tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
@@ -129,11 +136,18 @@ step model =
 -- EXPORTED --------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-new : Type
-new =
-   {
-      displayed_text = [],
-      displayed_options = []
-   }
+select_choice : Int -> Struct.Model.Type -> Struct.Model.Type
+select_choice ix model = model
+   -- TODO: implement
 
+input_string : String -> Struct.Model.Type -> Struct.Model.Type
+input_string string model = model
+   -- TODO: implement
 
+input_integer : String -> Struct.Model.Type -> Struct.Model.Type
+input_integer string model = model
+   -- TODO: implement
+
+input_command : String -> Struct.Model.Type -> Struct.Model.Type
+input_command string model = model
+   -- TODO: implement
