@@ -17,7 +17,6 @@ type alias TextData =
       effect_parameters : (List Value)
    }
 
-
 type RichText =
    StringText String
    | AugmentedText TextData
@@ -252,18 +251,26 @@ append_option option state =
 
 get_default : State -> String -> Value
 get_default state type_name =
-   case type_name of
-      "bool" -> (BoolValue False)
-      "float" -> (FloatValue 0.0)
-      "int" -> (IntValue 0)
-      "text" -> (TextValue (StringText ""))
-      "string" -> (StringValue "")
-      "list" -> (ListValue (Dict.empty))
-      "ptr" -> (PointerValue [])
-      other ->
-         case (Dict.get other state.user_types) of
+   case (maybe_get_default_primitive type_name) of
+      (Just value) -> value
+      Nothing ->
+         case (Dict.get type_name state.user_types) of
             (Just default) -> default
-            Nothing -> (StringValue ("Unknown type '" ++ other ++ "'"))
+            Nothing -> (StringValue ("Unknown type '" ++ type_name ++ "'"))
+
+-- Used during the decoding process, prior to 'state' being available, hence
+-- its separation from 'get_default'.
+maybe_get_default_primitive : String -> (Maybe Value)
+maybe_get_default_primitive type_name =
+   case type_name of
+      "bool" -> (Just (BoolValue False))
+      "float" -> (Just (FloatValue 0.0))
+      "int" -> (Just (IntValue 0))
+      "text" -> (Just (TextValue (StringText "")))
+      "string" -> (Just (StringValue ""))
+      "list" -> (Just (ListValue (Dict.empty)))
+      "ptr" -> (Just (PointerValue []))
+      _ -> Nothing
 
 apply_at_address : (
       (List String) ->

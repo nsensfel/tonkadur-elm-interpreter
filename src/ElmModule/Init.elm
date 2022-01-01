@@ -5,6 +5,8 @@ import Struct.Flags
 import Struct.Event
 import Struct.Model
 
+import Comm.LoadStory
+
 --------------------------------------------------------------------------------
 -- LOCAL -----------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -15,4 +17,4 @@ import Struct.Model
 init : Struct.Flags.Type -> (Struct.Model.Type, (Cmd Struct.Event.Type))
 init flags =
    -- TODO: read flags and request story.
-   ((Struct.Model.new), Cmd.none)
+   ((Struct.Model.new), (Comm.LoadStory.request "/story/0.json"))

@@ -1,5 +1,6 @@
 module Update.Story exposing
    (
+      start,
       select_choice,
       input_string,
       input_integer,
@@ -135,6 +136,8 @@ step model =
 --------------------------------------------------------------------------------
 -- EXPORTED --------------------------------------------------------------------
 --------------------------------------------------------------------------------
+start : Struct.Model.Type -> Struct.Model.Type
+start model = (step model)
 
 select_choice : Int -> Struct.Model.Type -> Struct.Model.Type
 select_choice ix model = model
