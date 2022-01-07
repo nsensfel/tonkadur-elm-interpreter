@@ -13,7 +13,8 @@ import List
 --------------------------------------------------------------------------------
 type alias Type =
    {
-      url_parameters : (List (List String))
+      url_parameters : (List (List String)),
+      random_number : Int
    }
 
 --------------------------------------------------------------------------------

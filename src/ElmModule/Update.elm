@@ -1,7 +1,6 @@
 module ElmModule.Update exposing (update)
 
 -- Elm -------------------------------------------------------------------------
-import Html
 
 -- Local Module ----------------------------------------------------------------
 import Struct.Event
@@ -37,9 +36,8 @@ update event model =
                (
                   {model |
                      ui =
-                        -- TODO: display the actual error.
-                        (Struct.UI.display_error
-                           (Html.text "Failed to load story")
+                        (Struct.UI.display_string_error
+                           "Failed to load story"
                            model.ui
                         )
                   },

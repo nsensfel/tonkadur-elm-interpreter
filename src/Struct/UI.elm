@@ -52,6 +52,12 @@ display_error : (Html.Html Struct.Event.Type) -> Type -> Type
 display_error html ui =
    {ui | displayed_errors = (List.append ui.displayed_errors [html])}
 
+display_string_error : String -> Type -> Type
+display_string_error string ui =
+   {ui |
+      displayed_errors = (List.append ui.displayed_errors [(Html.text string)])
+   }
+
 display_choice : Int -> (Html.Html Struct.Event.Type) -> Type -> Type
 display_choice ix html ui =
    {ui | displayed_choices = (List.append ui.displayed_choices [(ix, html)])}

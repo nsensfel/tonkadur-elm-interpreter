@@ -105,18 +105,11 @@ initialize type_name address state =
       new_state =
          {state |
             memory =
-               (Tonkadur.Types.apply_at_address
+               (Tonkadur.Types.set_at_address
                   address_as_list
-                  (\last_addr dict ->
-                     (Dict.insert
-                        last_addr
-                        (Tonkadur.Types.get_default state type_name)
-                        dict
-                     )
-                  )
+                  (Tonkadur.Types.get_default state type_name)
                   state.memory
                )
-            -- TODO: detect allocated memory for special handling.
          }
    in
       case address_as_list of
@@ -268,11 +261,11 @@ set_random address min max state =
    in
    {state |
       memory =
-         (Tonkadur.Types.apply_at_address
+         (Tonkadur.Types.set_at_address
             (Tonkadur.Types.value_to_address
                (Tonkadur.Compute.compute state address)
             )
-            (\last_addr dict -> (Dict.insert last_addr (Tonkadur.Types.IntValue value) dict))
+            (Tonkadur.Types.IntValue value)
             state.memory
          ),
 
@@ -288,17 +281,11 @@ set : (
 set address value state =
    {state |
       memory =
-         (Tonkadur.Types.apply_at_address
+         (Tonkadur.Types.set_at_address
             (Tonkadur.Types.value_to_address
                (Tonkadur.Compute.compute state address)
             )
-            (\last_addr dict ->
-               (Dict.insert
-                  last_addr
-                  (Tonkadur.Compute.compute state value)
-                  dict
-               )
-            )
+            (Tonkadur.Compute.compute state value)
             state.memory
          )
    }

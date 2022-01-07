@@ -318,9 +318,89 @@ apply_at_address address fun memory =
             memory
          )
 
+set_at_address : (
+      (List String) ->
+      Value ->
+      (Dict.Dict String Value) ->
+      (Dict.Dict String Value)
+   )
+set_at_address address value memory =
+   (apply_at_address
+      address
+      (\last_address dict -> (Dict.insert last_address value dict))
+      memory
+   )
+
 allow_continuing : State -> State
 allow_continuing state = {state | last_instruction_effect = MustContinue}
 
 compare_pointers : (List String) -> (List String) -> Int
-compare_pointers p0 p1 = 0
-   -- TODO: implement
+compare_pointers p0 p1 =
+   case (p0, p1) of
+      ((h0 :: t0), (h1 :: t1)) ->
+         if (h0 == h1)
+         then (compare_pointers t0 t1)
+         else if (h0 < h1)
+         then -1
+         else 1
+
+      ([], []) -> 0
+      (_, []) -> 1
+      ([], _) -> -1
+
+elm_list_to_wyrd_list : (x -> Value) -> (List x) -> Value
+elm_list_to_wyrd_list elm_value_to_wyrd_value list =
+   let
+      (final_next_index, final_as_dict) =
+         (List.foldl
+            (\value (next_index, as_dict) ->
+               (
+                  (next_index + 1),
+                  (Dict.insert
+                     (String.fromInt next_index)
+                     (elm_value_to_wyrd_value value)
+                     as_dict
+                  )
+               )
+            )
+            (0, (Dict.empty))
+            list
+         )
+   in
+      (ListValue final_as_dict)
+
+set_last_choice_index : Int -> State -> State
+set_last_choice_index ix state = {state | last_choice_index = ix}
+
+set_target_from_string : String -> State -> State
+set_target_from_string str state =
+   {state |
+      memory =
+         (set_at_address
+            (value_to_address state.memorized_target)
+            (StringValue str)
+            state.memory
+         )
+   }
+
+set_target_from_integer : Int -> State -> State
+set_target_from_integer int state =
+   {state |
+      memory =
+         (set_at_address
+            (value_to_address state.memorized_target)
+            (IntValue int)
+            state.memory
+         )
+   }
+
+set_target_from_command : (List String) -> State -> State
+set_target_from_command list state =
+   {state |
+      memory =
+         (set_at_address
+            (value_to_address state.memorized_target)
+            (elm_list_to_wyrd_list (\command -> (StringValue command)) list)
+            state.memory
+         )
+   }

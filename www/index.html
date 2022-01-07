@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Tonkadur - Elm Intepreter</title>
+      <meta charset="UTF-8">
+      <link rel="stylesheet" type="text/css" href="/style.css">
+   </head>
+   <body>
+      <div id="elm-page"></div>
+      <script src="script/main.js"></script>
+      <script src="global/script/urlparams.js"></script>
+      <script>
+         Elm.Main.init
+         (
+            {
+               flags:
+               {
+                  url_parameters: tonkadur.urlparams.get_parameters()
+               },
+               node: document.getElementById("elm-page")
+            }
+         );
+      </script>
+   </body>
+</html>

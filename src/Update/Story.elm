@@ -80,7 +80,8 @@ step model =
          }
 
       Tonkadur.Types.MustPromptChoice ->
-         let (last_ix, new_ui) =
+         let
+            (last_ix, new_ui) =
                (List.foldl
                   (\option (ix, ui) ->
                      case option of
@@ -140,17 +141,110 @@ start : Struct.Model.Type -> Struct.Model.Type
 start model = (step model)
 
 select_choice : Int -> Struct.Model.Type -> Struct.Model.Type
-select_choice ix model = model
-   -- TODO: implement
+select_choice ix model =
+   (step
+      {model |
+         tonkadur =
+            (Tonkadur.Types.set_last_choice_index
+               ix
+               model.tonkadur
+            )
+      }
+   )
 
 input_string : String -> Struct.Model.Type -> Struct.Model.Type
-input_string string model = model
-   -- TODO: implement
+input_string string model =
+   let string_length = (String.length string) in
+   if ((string_length < model.ui.min) || (string_length > model.ui.max))
+   then
+      {model |
+         ui =
+            (Struct.UI.display_string_error
+               (
+                  "Input string should be between "
+                  ++ (String.fromInt model.ui.min)
+                  ++ " and "
+                  ++ (String.fromInt model.ui.max)
+                  ++ " characters."
+               )
+               model.ui
+            )
+      }
+   else
+      (step
+         {model |
+            tonkadur =
+               (Tonkadur.Types.set_target_from_string
+                  string
+                  model.tonkadur
+               )
+         }
+      )
 
 input_integer : String -> Struct.Model.Type -> Struct.Model.Type
-input_integer string model = model
-   -- TODO: implement
+input_integer string model =
+   case (String.toInt string) of
+      Nothing ->
+         {model |
+            ui =
+               (Struct.UI.display_string_error
+                  "Input expects an integer."
+                  model.ui
+               )
+         }
+
+      (Just int) ->
+         if ((int < model.ui.min) || (int > model.ui.max))
+         then
+            {model |
+               ui =
+                  (Struct.UI.display_string_error
+                     (
+                        "Input integer should be between "
+                        ++ (String.fromInt model.ui.min)
+                        ++ " and "
+                        ++ (String.fromInt model.ui.max)
+                        ++ "."
+                     )
+                     model.ui
+                  )
+            }
+         else
+            (step
+               {model |
+                  tonkadur =
+                     (Tonkadur.Types.set_target_from_integer
+                        int
+                        model.tonkadur
+                     )
+               }
+            )
 
 input_command : String -> Struct.Model.Type -> Struct.Model.Type
-input_command string model = model
-   -- TODO: implement
+input_command string model =
+   let string_length = (String.length string) in
+   if ((string_length < model.ui.min) || (string_length > model.ui.max))
+   then
+      {model |
+         ui =
+            (Struct.UI.display_string_error
+               (
+                  "Input string should be between "
+                  ++ (String.fromInt model.ui.min)
+                  ++ " and "
+                  ++ (String.fromInt model.ui.max)
+                  ++ " characters."
+               )
+               model.ui
+            )
+      }
+   else
+      (step
+         {model |
+            tonkadur =
+               (Tonkadur.Types.set_target_from_command
+                  (String.words string)
+                  model.tonkadur
+               )
+         }
+      )
