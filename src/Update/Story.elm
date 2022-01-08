@@ -42,9 +42,19 @@ step model =
                   }
                )
 
-            Nothing -> model -- TODO: error
+            Nothing ->
+               {model |
+                  ui =
+                     (Struct.UI.display_string_error
+                        (
+                           "[Programming error] Cannot 'step' Tonkadur story:"
+                           ++ " Not in MustContinue state."
+                        )
+                        model.ui
+                     )
+               }
 
-      Tonkadur.Types.MustEnd -> model -- TODO
+      Tonkadur.Types.MustEnd -> model -- TODO, although that might be right.
 
       (Tonkadur.Types.MustPromptCommand min max label) ->
          {model |

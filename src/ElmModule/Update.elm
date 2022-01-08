@@ -30,7 +30,17 @@ update event model =
       (Struct.Event.LoadStory http_result) ->
          case http_result of
             (Ok story) ->
-               ((Update.Story.start {model | tonkadur = story}), Cmd.none)
+               (
+                  (Update.Story.start
+                     {model |
+                        tonkadur =
+                           {story |
+                              random_seed = model.tonkadur.random_seed
+                           }
+                     }
+                  ),
+                     Cmd.none
+               )
 
             (Err error) ->
                (

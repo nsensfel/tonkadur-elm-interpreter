@@ -14,7 +14,7 @@ import List
 type alias Type =
    {
       url_parameters : (List (List String)),
-      random_number : Int
+      random_seed : Int
    }
 
 --------------------------------------------------------------------------------
@@ -26,12 +26,26 @@ parameter_as_url parameter =
       [name, value] -> (name ++ "=" ++ value)
       _ -> ""
 
+get_first : (a -> Bool) -> (List a) -> (Maybe a)
+get_first fun list =
+   (List.head (List.filter fun list))
+
 --------------------------------------------------------------------------------
 -- EXPORTED --------------------------------------------------------------------
 --------------------------------------------------------------------------------
-force_get_parameter : String -> Type -> String
-force_get_parameter parameter flags = ""
-   -- TODO: implement using Tactician Online's, but without Shared.Util.List
+force_get_parameter : Type -> String -> String
+force_get_parameter flags parameter =
+   case
+      (get_first
+         (\e -> ((List.head e) == (Just parameter)))
+         flags.url_parameters
+      )
+   of
+      Nothing -> ""
+      (Just a) ->
+         case (List.tail a) of
+            (Just (h :: t)) -> h
+            _ -> ""
 
 get_parameters_as_url : Type -> String
 get_parameters_as_url flags =

@@ -11,6 +11,7 @@ import Tonkadur.Types
 
 -- Local Module ----------------------------------------------------------------
 import Struct.UI
+import Struct.Flags
 
 --------------------------------------------------------------------------------
 -- TYPES -----------------------------------------------------------------------
@@ -18,6 +19,7 @@ import Struct.UI
 type alias Type =
    {
       tonkadur : Tonkadur.Types.State,
+      flags : Struct.Flags.Type,
       ui : Struct.UI.Type
    }
 
@@ -28,9 +30,10 @@ type alias Type =
 --------------------------------------------------------------------------------
 -- EXPORTED --------------------------------------------------------------------
 --------------------------------------------------------------------------------
-new : Type
-new =
+new : Struct.Flags.Type -> Type
+new flags =
    {
-      tonkadur = (Tonkadur.Types.new_state 42),
+      tonkadur = (Tonkadur.Types.new_state flags.random_seed),
+      flags = flags,
       ui = (Struct.UI.new)
    }

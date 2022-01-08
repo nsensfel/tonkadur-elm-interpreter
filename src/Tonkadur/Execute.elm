@@ -61,9 +61,14 @@ assert : (
 assert condition label state =
    if (Tonkadur.Types.value_to_bool (Tonkadur.Compute.compute state condition))
    then
-      -- TODO: some special error report
       state
-   else state
+   else
+      {state |
+         last_instruction_effect =
+            (Tonkadur.Types.MustDisplayError
+               (Tonkadur.Compute.compute state label)
+            )
+      }
 
 display : (
       Tonkadur.Types.Computation ->
@@ -71,13 +76,13 @@ display : (
       Tonkadur.Types.State
    )
 display label state =
-   -- TODO: where do we put displayed values?
-   state
+   {state |
+      last_instruction_effect =
+         (Tonkadur.Types.MustDisplay (Tonkadur.Compute.compute state label))
+   }
 
 end : Tonkadur.Types.State -> Tonkadur.Types.State
-end state =
-   -- TODO: what do we do with this?
-   state
+end state = {state | last_instruction_effect = Tonkadur.Types.MustEnd }
 
 extra_instruction : (
       String ->
@@ -86,9 +91,18 @@ extra_instruction : (
       Tonkadur.Types.State
    )
 extra_instruction name parameters state =
-   -- No extra instruction supported.
-   -- TODO: error report.
-   state
+   {state |
+      last_instruction_effect =
+         (Tonkadur.Types.MustDisplayError
+            (Tonkadur.Types.StringValue
+               (
+                  "No such extra instruction \""
+                  ++ name
+                  ++ "\"."
+               )
+            )
+         )
+   }
 
 initialize : (
       String ->

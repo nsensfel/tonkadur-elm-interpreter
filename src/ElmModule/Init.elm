@@ -16,5 +16,13 @@ import Comm.LoadStory
 --------------------------------------------------------------------------------
 init : Struct.Flags.Type -> (Struct.Model.Type, (Cmd Struct.Event.Type))
 init flags =
-   -- TODO: read flags and request story.
-   ((Struct.Model.new), (Comm.LoadStory.request "/story/0.json"))
+   (
+      (Struct.Model.new flags),
+      (Comm.LoadStory.request
+         (
+            "/story/"
+            ++ (Struct.Flags.force_get_parameter flags "story")
+            ++ ".json"
+         )
+      )
+   )

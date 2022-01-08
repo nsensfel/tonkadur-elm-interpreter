@@ -15,7 +15,10 @@
             {
                flags:
                {
-                  url_parameters: tonkadur.urlparams.get_parameters()
+                  url_parameters: tonkadur.urlparams.get_parameters(),
+                  random_seed: Math.floor(
+                     (Math.random() * Number.MAX_SAFE_INTEGER)
+                  )
                },
                node: document.getElementById("elm-page")
             }
