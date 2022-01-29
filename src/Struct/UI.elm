@@ -12,6 +12,7 @@ import Struct.Event
 --------------------------------------------------------------------------------
 type InputType =
    NoInput
+   | FloatInput
    | IntegerInput
    | StringInput
    | CommandInput
@@ -23,6 +24,8 @@ type alias Type =
       displayed_choices : (List (Int, (Html.Html Struct.Event.Type))),
       min : Int,
       max : Int,
+      min_float : Float,
+      max_float : Float,
       input : InputType
    }
 
@@ -41,6 +44,8 @@ new =
       displayed_choices = [],
       min = -1,
       max = -1,
+      min_float = -1.0,
+      max_float = -1.0,
       input = NoInput
    }
 
@@ -64,6 +69,10 @@ display_choice ix html ui =
 
 prompt_string : Int -> Int -> Type -> Type
 prompt_string min max ui = {ui | min = min, max = max, input = StringInput}
+
+prompt_float : Float -> Float -> Type -> Type
+prompt_float min max ui =
+   {ui | min_float = min, max_float = max, input = FloatInput}
 
 prompt_integer : Int -> Int -> Type -> Type
 prompt_integer min max ui = {ui | min = min, max = max, input = IntegerInput}

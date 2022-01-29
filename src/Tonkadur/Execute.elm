@@ -30,7 +30,7 @@ add_event_option : (
    )
 add_event_option name parameters state =
    (Tonkadur.Types.append_option
-      (Tonkadur.Types.Event
+      (Tonkadur.Types.EventOption
          name
          (List.map (Tonkadur.Compute.compute state) parameters)
       )
@@ -44,7 +44,7 @@ add_text_option : (
    )
 add_text_option label state =
    (Tonkadur.Types.append_option
-      (Tonkadur.Types.Choice
+      (Tonkadur.Types.TextOption
          (Tonkadur.Types.value_to_text_or_string
             (Tonkadur.Compute.compute state label)
          )
@@ -60,8 +60,7 @@ assert : (
    )
 assert condition label state =
    if (Tonkadur.Types.value_to_bool (Tonkadur.Compute.compute state condition))
-   then
-      state
+   then state
    else
       {state |
          last_instruction_effect =
@@ -168,16 +167,16 @@ prompt_command prompt_data state =
          )
    }
 
-prompt_string : (
+prompt_float : (
       Tonkadur.Types.PromptInstructionData ->
       Tonkadur.Types.State ->
       Tonkadur.Types.State
    )
-prompt_string prompt_data state =
+prompt_float prompt_data state =
    {state |
       memorized_target = (Tonkadur.Compute.compute state prompt_data.address),
       last_instruction_effect =
-         (Tonkadur.Types.MustPromptString
+         (Tonkadur.Types.MustPromptFloat
             (Tonkadur.Compute.compute state prompt_data.min)
             (Tonkadur.Compute.compute state prompt_data.max)
             (Tonkadur.Compute.compute state prompt_data.label)
@@ -194,6 +193,22 @@ prompt_integer prompt_data state =
       memorized_target = (Tonkadur.Compute.compute state prompt_data.address),
       last_instruction_effect =
          (Tonkadur.Types.MustPromptInteger
+            (Tonkadur.Compute.compute state prompt_data.min)
+            (Tonkadur.Compute.compute state prompt_data.max)
+            (Tonkadur.Compute.compute state prompt_data.label)
+         )
+   }
+
+prompt_string : (
+      Tonkadur.Types.PromptInstructionData ->
+      Tonkadur.Types.State ->
+      Tonkadur.Types.State
+   )
+prompt_string prompt_data state =
+   {state |
+      memorized_target = (Tonkadur.Compute.compute state prompt_data.address),
+      last_instruction_effect =
+         (Tonkadur.Types.MustPromptString
             (Tonkadur.Compute.compute state prompt_data.min)
             (Tonkadur.Compute.compute state prompt_data.max)
             (Tonkadur.Compute.compute state prompt_data.label)
@@ -286,13 +301,13 @@ set_random address min max state =
       random_seed = next_random_seed
    }
 
-set : (
+set_value : (
       Tonkadur.Types.Computation ->
       Tonkadur.Types.Computation ->
       Tonkadur.Types.State ->
       Tonkadur.Types.State
    )
-set address value state =
+set_value address value state =
    {state |
       memory =
          (Tonkadur.Types.set_at_address
@@ -347,6 +362,9 @@ execute instruction state =
       (Tonkadur.Types.PromptCommand prompt_data) ->
          (increment_program_counter (prompt_command prompt_data new_state))
 
+      (Tonkadur.Types.PromptFloat prompt_data) ->
+         (increment_program_counter (prompt_float prompt_data new_state))
+
       (Tonkadur.Types.PromptInteger prompt_data) ->
          (increment_program_counter (prompt_integer prompt_data new_state))
 
@@ -363,6 +381,6 @@ execute instruction state =
       (Tonkadur.Types.SetRandom address min max) ->
          (increment_program_counter (set_random address min max new_state))
 
-      (Tonkadur.Types.Set address value) ->
-         (increment_program_counter (set address value new_state))
+      (Tonkadur.Types.SetValue address value) ->
+         (increment_program_counter (set_value address value new_state))
 

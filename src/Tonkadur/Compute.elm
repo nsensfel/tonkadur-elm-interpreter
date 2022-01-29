@@ -108,6 +108,7 @@ cast state from to param =
                )
 
             "float" -> (Tonkadur.Types.FloatValue (toFloat int))
+            "bool" -> (Tonkadur.Types.BoolValue (not (int == 0)))
             "int" -> (Tonkadur.Types.IntValue int)
             _ -> (unsupported_cast from to)
 
@@ -130,6 +131,11 @@ cast state from to param =
                   Nothing -> (unsupported_cast from to)
                   (Just result) -> (Tonkadur.Types.IntValue result)
 
+            "bool" ->
+               (Tonkadur.Types.BoolValue
+                  ((String.toLower (String.trim as_string)) == "true")
+               )
+
             "text" -> (Tonkadur.Types.TextValue text_v)
             _ -> (unsupported_cast from to)
 
@@ -145,6 +151,11 @@ cast state from to param =
                case (String.toInt string) of
                   Nothing -> (unsupported_cast from to)
                   (Just result) -> (Tonkadur.Types.IntValue result)
+
+            "bool" ->
+               (Tonkadur.Types.BoolValue
+                  ((String.toLower (String.trim string)) == "true")
+               )
 
             "text" ->
                (Tonkadur.Types.TextValue (Tonkadur.Types.StringText string))

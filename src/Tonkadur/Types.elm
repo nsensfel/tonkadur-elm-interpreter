@@ -33,8 +33,8 @@ type Value =
    | StructureValue (Dict.Dict String Value)
 
 type Option =
-   Choice RichText
-   | Event String (List Value)
+   TextOption RichText
+   | EventOption String (List Value)
 
 type Computation =
    AddTextEffect String (List Computation) (List Computation)
@@ -69,24 +69,25 @@ type Instruction =
    | ExtraInstruction String (List Computation)
    | Initialize String Computation
    | PromptCommand PromptInstructionData
+   | PromptFloat PromptInstructionData
    | PromptInteger PromptInstructionData
    | PromptString PromptInstructionData
    | Remove Computation
    | ResolveChoice
    | SetPC Computation
    | SetRandom Computation Computation Computation
-   | Set Computation Computation
+   | SetValue Computation Computation
 
 type InstructionEffect =
    MustContinue
    | MustEnd
    | MustPromptCommand Value Value Value
+   | MustPromptFloat Value Value Value
    | MustPromptInteger Value Value Value
    | MustPromptString Value Value Value
    | MustPromptChoice
    | MustDisplay Value
    | MustDisplayError Value
-   | MustExtraEffect String (List Value)
 
 type alias State =
    {
@@ -372,6 +373,9 @@ elm_list_to_wyrd_list elm_value_to_wyrd_value list =
 set_last_choice_index : Int -> State -> State
 set_last_choice_index ix state = {state | last_choice_index = ix}
 
+clear_all_options : State -> State
+clear_all_options state = {state | available_options = []}
+
 set_target_from_string : String -> State -> State
 set_target_from_string str state =
    {state |
@@ -382,6 +386,18 @@ set_target_from_string str state =
             state.memory
          )
    }
+
+set_target_from_float : Float -> State -> State
+set_target_from_float float state =
+   {state |
+      memory =
+         (set_at_address
+            (value_to_address state.memorized_target)
+            (FloatValue float)
+            state.memory
+         )
+   }
+
 
 set_target_from_integer : Int -> State -> State
 set_target_from_integer int state =

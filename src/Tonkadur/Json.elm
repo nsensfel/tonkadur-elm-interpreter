@@ -31,13 +31,13 @@ specific_computation_decoder name =
             (\ename params content ->
                (Tonkadur.Types.AddTextEffect ename params content)
             )
-            (Json.Decode.field "effect" (Json.Decode.string))
+            (Json.Decode.field "name" (Json.Decode.string))
             (Json.Decode.field
                "parameters"
                (Json.Decode.list (computation_decoder))
             )
             (Json.Decode.field
-               "content"
+               "values"
                (Json.Decode.list (computation_decoder))
             )
          )
@@ -45,7 +45,7 @@ specific_computation_decoder name =
       "address" ->
          (Json.Decode.map
             (\address -> (Tonkadur.Types.Address address))
-            (Json.Decode.field "address" (computation_decoder))
+            (Json.Decode.field "value_or_target" (computation_decoder))
          )
 
       "cast" ->
@@ -105,15 +105,21 @@ specific_computation_decoder name =
       "relative_address" ->
          (Json.Decode.map2
             (\base extra -> (Tonkadur.Types.RelativeAddress base extra))
-            (Json.Decode.field "base" (computation_decoder))
+            (Json.Decode.field "target" (computation_decoder))
             (Json.Decode.field "extra" (computation_decoder))
+         )
+
+      "size" ->
+         (Json.Decode.map
+            (\computation -> (Tonkadur.Types.Size computation))
+            (Json.Decode.field "target" (computation_decoder))
          )
 
       "text" ->
          (Json.Decode.map
             (\computation -> (Tonkadur.Types.Text computation))
             (Json.Decode.field
-               "content"
+               "values"
                (Json.Decode.list (computation_decoder))
             )
          )
@@ -121,13 +127,13 @@ specific_computation_decoder name =
       "value_of" ->
          (Json.Decode.map
             (\computation -> (Tonkadur.Types.ValueOf computation))
-            (Json.Decode.field "reference" (computation_decoder))
+            (Json.Decode.field "target" (computation_decoder))
          )
 
       _ ->
          (Json.Decode.map
             (\params -> (Tonkadur.Types.ExtraComputation name params))
-            (Json.Decode.field "params"
+            (Json.Decode.field "parameters"
                (Json.Decode.list (computation_decoder))
             )
          )
@@ -156,7 +162,7 @@ prompt_instruction_data_decoder =
       |> (Json.Decode.Pipeline.required "target" (computation_decoder))
 
       -- label
-      |> (Json.Decode.Pipeline.required "label" (computation_decoder))
+      |> (Json.Decode.Pipeline.required "message" (computation_decoder))
    )
 
 specific_instruction_decoder : (
@@ -167,9 +173,9 @@ specific_instruction_decoder name =
       "add_event_option" ->
          (Json.Decode.map2
             (\oname params -> (Tonkadur.Types.AddEventOption oname params))
-            (Json.Decode.field "event" (Json.Decode.string))
+            (Json.Decode.field "name" (Json.Decode.string))
             (Json.Decode.field
-               "reference"
+               "parameters"
                (Json.Decode.list (computation_decoder))
             )
          )
@@ -177,7 +183,7 @@ specific_instruction_decoder name =
       "add_text_option" ->
          (Json.Decode.map
             (\computation -> (Tonkadur.Types.AddTextOption computation))
-            (Json.Decode.field "label" (computation_decoder))
+            (Json.Decode.field "value" (computation_decoder))
          )
 
       "assert" ->
@@ -190,7 +196,7 @@ specific_instruction_decoder name =
       "display" ->
          (Json.Decode.map
             (\computation -> (Tonkadur.Types.Display computation))
-            (Json.Decode.field "content" (computation_decoder))
+            (Json.Decode.field "value" (computation_decoder))
          )
 
       "end" -> (Json.Decode.succeed Tonkadur.Types.End)
@@ -198,12 +204,18 @@ specific_instruction_decoder name =
          (Json.Decode.map2
             (\type_name ref -> (Tonkadur.Types.Initialize type_name ref))
             (Json.Decode.field "type" (Json.Decode.string))
-            (Json.Decode.field "reference" (computation_decoder))
+            (Json.Decode.field "target" (computation_decoder))
          )
 
       "prompt_command" ->
          (Json.Decode.map
             (\data -> (Tonkadur.Types.PromptCommand data))
+            (prompt_instruction_data_decoder)
+         )
+
+      "prompt_float" ->
+         (Json.Decode.map
+            (\data -> (Tonkadur.Types.PromptFloat data))
             (prompt_instruction_data_decoder)
          )
 
@@ -222,7 +234,7 @@ specific_instruction_decoder name =
       "remove" ->
          (Json.Decode.map
             (\computation -> (Tonkadur.Types.Remove computation))
-            (Json.Decode.field "reference" (computation_decoder))
+            (Json.Decode.field "target" (computation_decoder))
          )
 
       "resolve_choice" -> (Json.Decode.succeed Tonkadur.Types.ResolveChoice)
@@ -242,15 +254,15 @@ specific_instruction_decoder name =
 
       "set_value" ->
          (Json.Decode.map2
-            (\target value -> (Tonkadur.Types.Set target value))
-            (Json.Decode.field "reference" (computation_decoder))
+            (\target value -> (Tonkadur.Types.SetValue target value))
+            (Json.Decode.field "target" (computation_decoder))
             (Json.Decode.field "value" (computation_decoder))
          )
 
       _ ->
          (Json.Decode.map
             (\params -> (Tonkadur.Types.ExtraInstruction name params))
-            (Json.Decode.field "params"
+            (Json.Decode.field "parameters"
                (Json.Decode.list (computation_decoder))
             )
          )

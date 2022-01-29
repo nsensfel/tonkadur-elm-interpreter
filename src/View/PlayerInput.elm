@@ -41,6 +41,44 @@ get_html model =
    then
       case model.ui.input of
          Struct.UI.NoInput -> (Html.div [] [])
+         Struct.UI.FloatInput ->
+            (Html.div
+               [
+                  (Html.Attributes.class "tonkadur-input")
+               ]
+               [
+                  (Html.div
+                     [
+                        (Html.Attributes.class "tonkadur-input-instruction")
+                     ]
+                     [
+                        (Html.text
+                           (
+                              "A number between "
+                              ++ (String.fromFloat model.ui.min_float)
+                              ++ " and "
+                              ++ (String.fromFloat model.ui.max_float)
+                              ++ " is expected:"
+                           )
+                        )
+                     ]
+                  ),
+                  (Html.input
+                     [
+                        (Html.Attributes.class "tonkadur-input-field"),
+                        (Html.Attributes.min
+                           (String.fromFloat model.ui.min_float)
+                        ),
+                        (Html.Attributes.max
+                           (String.fromFloat model.ui.max_float)
+                        )
+                     ]
+                     [
+                     ]
+                  )
+               ]
+            )
+
          Struct.UI.IntegerInput ->
             (Html.div
                [

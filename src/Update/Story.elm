@@ -67,6 +67,17 @@ step model =
                )
          }
 
+      (Tonkadur.Types.MustPromptFloat min max label) ->
+         {model |
+            tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
+            ui =
+               (Struct.UI.prompt_float
+                  (Tonkadur.Types.value_to_float min)
+                  (Tonkadur.Types.value_to_float max)
+                  model.ui
+               )
+         }
+
       (Tonkadur.Types.MustPromptInteger min max label) ->
          {model |
             tonkadur = (Tonkadur.Types.allow_continuing model.tonkadur),
@@ -95,7 +106,7 @@ step model =
                (List.foldl
                   (\option (ix, ui) ->
                      case option of
-                        (Tonkadur.Types.Choice rich_text) ->
+                        (Tonkadur.Types.TextOption rich_text) ->
                            (
                               (ix + 1),
                               (Struct.UI.display_choice
@@ -142,7 +153,7 @@ step model =
             }
          )
 
-      _ -> model
+--      _ -> model
 
 --------------------------------------------------------------------------------
 -- EXPORTED --------------------------------------------------------------------
@@ -155,9 +166,11 @@ select_choice ix model =
    (step
       {model |
          tonkadur =
-            (Tonkadur.Types.set_last_choice_index
-               ix
-               model.tonkadur
+            (Tonkadur.Types.clear_all_options
+               (Tonkadur.Types.set_last_choice_index
+                  ix
+                  model.tonkadur
+               )
             )
       }
    )
@@ -190,6 +203,45 @@ input_string string model =
                )
          }
       )
+
+input_float : String -> Struct.Model.Type -> Struct.Model.Type
+input_float string model =
+   case (String.toFloat string) of
+      Nothing ->
+         {model |
+            ui =
+               (Struct.UI.display_string_error
+                  "Input expects a float."
+                  model.ui
+               )
+         }
+
+      (Just float) ->
+         if ((float < model.ui.min_float) || (float > model.ui.max_float))
+         then
+            {model |
+               ui =
+                  (Struct.UI.display_string_error
+                     (
+                        "Input float should be between "
+                        ++ (String.fromFloat model.ui.min_float)
+                        ++ " and "
+                        ++ (String.fromFloat model.ui.max_float)
+                        ++ "."
+                     )
+                     model.ui
+                  )
+            }
+         else
+            (step
+               {model |
+                  tonkadur =
+                     (Tonkadur.Types.set_target_from_float
+                        float
+                        model.tonkadur
+                     )
+               }
+            )
 
 input_integer : String -> Struct.Model.Type -> Struct.Model.Type
 input_integer string model =
