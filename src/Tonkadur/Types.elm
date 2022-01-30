@@ -135,26 +135,42 @@ value_to_bool : Value -> Bool
 value_to_bool value =
    case value of
       (BoolValue result) -> result
-      _ -> False
+      _ ->
+         (Debug.log
+            ("Can't value_to_bool " ++ (debug_value_to_string value))
+            False
+         )
 
 value_to_float : Value -> Float
 value_to_float value =
    case value of
       (FloatValue result) -> result
-      _ -> 0.0
+      _ ->
+         (Debug.log
+            ("Can't value_to_float " ++ (debug_value_to_string value))
+            0.0
+         )
 
 value_to_int : Value -> Int
 value_to_int value =
    case value of
       (IntValue result) -> result
-      _ -> 0
+      _ ->
+         (Debug.log
+            ("Can't value_to_int " ++ (debug_value_to_string value))
+            0
+         )
 
 value_to_text_or_string : Value -> RichText
 value_to_text_or_string value =
    case value of
       (TextValue result) -> result
       (StringValue string) -> (StringText string)
-      _ -> (StringText "")
+      _ ->
+         (Debug.log
+            ("Can't value_to_text_or_string" ++ (debug_value_to_string value))
+            (StringText "")
+         )
 
 value_to_string : Value -> String
 value_to_string value =
@@ -175,18 +191,93 @@ value_to_string value =
 
       _ -> "Cannot turn this value into string without cast."
 
+debug_value_to_string : Value -> String
+debug_value_to_string value =
+   case value of
+      (StringValue result) -> result
+      (TextValue text) ->
+         case text of
+            (StringText result) -> result
+            (AugmentedText rich_text) ->
+               (String.concat
+                  (List.map
+                     (\text_value -> (value_to_string (TextValue text_value)))
+                     rich_text.content
+                  )
+               )
+
+            NewlineText -> "\n"
+      (BoolValue bool) ->
+         if (bool)
+         then "true"
+         else "false"
+
+      (FloatValue float) -> (String.fromFloat float)
+      (IntValue int) -> (String.fromInt int)
+      (ListValue dict) ->
+         (
+            "["
+            ++
+            (String.join
+               ", "
+               (List.map
+                  (\(key, val) ->
+                     (
+                        key
+                        ++ ": "
+                        ++ (debug_value_to_string val)
+                     )
+                  )
+                  (Dict.toList dict)
+               )
+            )
+            ++
+            "]"
+         )
+
+      (PointerValue list) -> ("(addr [" ++ (String.join ", " list) ++ "])")
+      (StructureValue dict) ->
+         (
+            "["
+            ++
+            (String.join
+               ", "
+               (List.map
+                  (\(key, val) ->
+                     (
+                        key
+                        ++ ": "
+                        ++ (debug_value_to_string val)
+                     )
+                  )
+                  (Dict.toList dict)
+               )
+            )
+            ++
+            "]"
+         )
+
+
 value_to_dict : Value -> (Dict.Dict String Value)
 value_to_dict value =
    case value of
       (StructureValue dict) -> dict
       (ListValue dict) -> dict
-      _ -> (Dict.empty)
+      _ ->
+         (Debug.log
+            ("Can't value_to_dict" ++ (debug_value_to_string value))
+            (Dict.empty)
+         )
 
 value_to_address : Value -> (List String)
 value_to_address value =
    case value of
       (PointerValue result) -> result
-      _ -> []
+      _ ->
+         (Debug.log
+            ("Can't value_to_adress " ++ (debug_value_to_string value))
+            []
+         )
 
 no_text_effect : String
 no_text_effect = ""
@@ -271,6 +362,7 @@ maybe_get_default_primitive type_name =
       "string" -> (Just (StringValue ""))
       "list" -> (Just (ListValue (Dict.empty)))
       "ptr" -> (Just (PointerValue []))
+      "wild dict" -> (Just (StructureValue (Dict.empty)))
       _ -> Nothing
 
 apply_at_address : (

@@ -2,9 +2,7 @@ module Update.Story exposing
    (
       start,
       select_choice,
-      input_string,
-      input_integer,
-      input_command
+      handle_prompt_input
    )
 
 -- Elm -------------------------------------------------------------------------
@@ -63,7 +61,10 @@ step model =
                (Struct.UI.prompt_command
                   (Tonkadur.Types.value_to_int min)
                   (Tonkadur.Types.value_to_int max)
-                  model.ui
+                  (Struct.UI.display_text
+                     (Util.TonkadurToHtml.convert label)
+                     model.ui
+                  )
                )
          }
 
@@ -74,7 +75,10 @@ step model =
                (Struct.UI.prompt_float
                   (Tonkadur.Types.value_to_float min)
                   (Tonkadur.Types.value_to_float max)
-                  model.ui
+                  (Struct.UI.display_text
+                     (Util.TonkadurToHtml.convert label)
+                     model.ui
+                  )
                )
          }
 
@@ -85,7 +89,10 @@ step model =
                (Struct.UI.prompt_integer
                   (Tonkadur.Types.value_to_int min)
                   (Tonkadur.Types.value_to_int max)
-                  model.ui
+                  (Struct.UI.display_text
+                     (Util.TonkadurToHtml.convert label)
+                     model.ui
+                  )
                )
          }
 
@@ -96,7 +103,10 @@ step model =
                (Struct.UI.prompt_string
                   (Tonkadur.Types.value_to_int min)
                   (Tonkadur.Types.value_to_int max)
-                  model.ui
+                  (Struct.UI.display_text
+                     (Util.TonkadurToHtml.convert label)
+                     model.ui
+                  )
                )
          }
 
@@ -154,26 +164,6 @@ step model =
          )
 
 --      _ -> model
-
---------------------------------------------------------------------------------
--- EXPORTED --------------------------------------------------------------------
---------------------------------------------------------------------------------
-start : Struct.Model.Type -> Struct.Model.Type
-start model = (step model)
-
-select_choice : Int -> Struct.Model.Type -> Struct.Model.Type
-select_choice ix model =
-   (step
-      {model |
-         tonkadur =
-            (Tonkadur.Types.clear_all_options
-               (Tonkadur.Types.set_last_choice_index
-                  ix
-                  model.tonkadur
-               )
-            )
-      }
-   )
 
 input_string : String -> Struct.Model.Type -> Struct.Model.Type
 input_string string model =
@@ -310,3 +300,38 @@ input_command string model =
                )
          }
       )
+
+--------------------------------------------------------------------------------
+-- EXPORTED --------------------------------------------------------------------
+--------------------------------------------------------------------------------
+start : Struct.Model.Type -> Struct.Model.Type
+start model = (step model)
+
+select_choice : Int -> Struct.Model.Type -> Struct.Model.Type
+select_choice ix model =
+   (step
+      {model |
+         tonkadur =
+            (Tonkadur.Types.clear_all_options
+               (Tonkadur.Types.set_last_choice_index
+                  ix
+                  model.tonkadur
+               )
+            ),
+         ui = (Struct.UI.clear_prompt model.ui)
+      }
+   )
+
+handle_prompt_input : Struct.Model.Type -> Struct.Model.Type
+handle_prompt_input model =
+   case model.ui.input of
+      Struct.UI.NoInput -> model
+      Struct.UI.FloatInput -> (input_float (Struct.UI.get_field_content model.ui) model)
+      Struct.UI.IntegerInput ->
+         (input_integer (Struct.UI.get_field_content model.ui) model)
+      Struct.UI.StringInput ->
+         (input_string (Struct.UI.get_field_content model.ui) model)
+
+      Struct.UI.CommandInput ->
+         (input_command (Struct.UI.get_field_content model.ui) model)
+

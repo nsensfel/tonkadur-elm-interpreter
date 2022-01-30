@@ -53,7 +53,7 @@ specific_computation_decoder name =
             (\from to value -> (Tonkadur.Types.Cast from to value))
             (Json.Decode.field "from" (Json.Decode.string))
             (Json.Decode.field "to" (Json.Decode.string))
-            (Json.Decode.field "content" (computation_decoder))
+            (Json.Decode.field "value" (computation_decoder))
          )
 
       "constant" ->
@@ -357,7 +357,7 @@ sequences_decoder =
          (Json.Decode.map2
             (\name line -> (name, line))
             (Json.Decode.field "name" (Json.Decode.string))
-            (Json.Decode.field "value" (Json.Decode.int))
+            (Json.Decode.field "line" (Json.Decode.int))
          )
       )
    )

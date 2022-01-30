@@ -71,9 +71,18 @@ get_html model =
                         ),
                         (Html.Attributes.max
                            (String.fromFloat model.ui.max_float)
-                        )
+                        ),
+                        (Html.Events.onInput (Struct.Event.UserInputInProgress))
                      ]
                      [
+                     ]
+                  ),
+                  (Html.button
+                     [
+                        (Html.Events.onClick (Struct.Event.UserInputValidated))
+                     ]
+                     [
+                        (Html.text "OK")
                      ]
                   )
                ]
@@ -105,9 +114,18 @@ get_html model =
                      [
                         (Html.Attributes.class "tonkadur-input-field"),
                         (Html.Attributes.min (String.fromInt model.ui.min)),
-                        (Html.Attributes.max (String.fromInt model.ui.max))
+                        (Html.Attributes.max (String.fromInt model.ui.max)),
+                        (Html.Events.onInput (Struct.Event.UserInputInProgress))
                      ]
                      [
+                     ]
+                  ),
+                  (Html.button
+                     [
+                        (Html.Events.onClick (Struct.Event.UserInputValidated))
+                     ]
+                     [
+                        (Html.text "OK")
                      ]
                   )
                ]
@@ -139,9 +157,18 @@ get_html model =
                      [
                         (Html.Attributes.class "tonkadur-input-field"),
                         (Html.Attributes.minlength model.ui.min),
-                        (Html.Attributes.maxlength model.ui.max)
+                        (Html.Attributes.maxlength model.ui.max),
+                        (Html.Events.onInput (Struct.Event.UserInputInProgress))
                      ]
                      [
+                     ]
+                  ),
+                  (Html.button
+                     [
+                        (Html.Events.onClick (Struct.Event.UserInputValidated))
+                     ]
+                     [
+                        (Html.text "OK")
                      ]
                   )
                ]
@@ -174,9 +201,18 @@ get_html model =
                      [
                         (Html.Attributes.class "tonkadur-input-field"),
                         (Html.Attributes.minlength model.ui.min),
-                        (Html.Attributes.maxlength model.ui.max)
+                        (Html.Attributes.maxlength model.ui.max),
+                        (Html.Events.onInput (Struct.Event.UserInputInProgress))
                      ]
                      [
+                     ]
+                  ),
+                  (Html.button
+                     [
+                        (Html.Events.onClick (Struct.Event.UserInputValidated))
+                     ]
+                     [
+                        (Html.text "OK")
                      ]
                   )
                ]

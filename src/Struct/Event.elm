@@ -14,6 +14,8 @@ import Tonkadur.Types
 type Type =
    None
    | ChoiceSelected Int
+   | UserInputInProgress String
+   | UserInputValidated
    | LoadStory (Result Http.Error Tonkadur.Types.State)
 
 --------------------------------------------------------------------------------

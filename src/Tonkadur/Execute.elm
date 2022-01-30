@@ -273,7 +273,7 @@ set_random : (
       Tonkadur.Types.State ->
       Tonkadur.Types.State
    )
-set_random address min max state =
+set_random min max address state =
    let
       (value, next_random_seed) =
          (Random.step
@@ -378,8 +378,8 @@ execute instruction state =
          (increment_program_counter (resolve_choice new_state))
 
       (Tonkadur.Types.SetPC value) -> (set_pc value new_state)
-      (Tonkadur.Types.SetRandom address min max) ->
-         (increment_program_counter (set_random address min max new_state))
+      (Tonkadur.Types.SetRandom min max address) ->
+         (increment_program_counter (set_random min max address new_state))
 
       (Tonkadur.Types.SetValue address value) ->
          (increment_program_counter (set_value address value new_state))

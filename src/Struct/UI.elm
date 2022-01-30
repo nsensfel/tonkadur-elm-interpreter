@@ -26,7 +26,8 @@ type alias Type =
       max : Int,
       min_float : Float,
       max_float : Float,
-      input : InputType
+      input : InputType,
+      field_content : String
    }
 
 --------------------------------------------------------------------------------
@@ -46,7 +47,8 @@ new =
       max = -1,
       min_float = -1.0,
       max_float = -1.0,
-      input = NoInput
+      input = NoInput,
+      field_content = ""
    }
 
 display_text : (Html.Html Struct.Event.Type) -> Type -> Type
@@ -81,7 +83,16 @@ prompt_command : Int -> Int -> Type -> Type
 prompt_command min max ui = {ui | min = min, max = max, input = CommandInput}
 
 clear_prompt : Type -> Type
-clear_prompt ui = {ui | min = -1, max = -1, input = NoInput}
+clear_prompt ui =
+   {ui |
+      min = -1,
+      min_float = -1.0,
+      max = -1,
+      max_float = -1.0,
+      input = NoInput,
+      displayed_choices = [],
+      field_content = ""
+   }
 
 clear_displayed_texts : Type -> Type
 clear_displayed_texts ui = {ui | displayed_texts = []}
@@ -91,3 +102,9 @@ clear_displayed_errors ui = {ui | displayed_errors = []}
 
 clear_displayed_choices : Type -> Type
 clear_displayed_choices ui = {ui | displayed_choices = []}
+
+set_field_content : String -> Type -> Type
+set_field_content value ui = {ui | field_content = value}
+
+get_field_content : Type -> String
+get_field_content ui = ui.field_content

@@ -1,6 +1,7 @@
 module Tonkadur.Compute exposing (compute)
 
 -- Elm -------------------------------------------------------------------------
+import Debug
 import Dict
 import List
 
@@ -61,6 +62,20 @@ unsupported_cast from to =
       ("Unsupported cast from " ++ from ++ " to " ++ to ++ ".")
    )
 
+unsupported_cast_with_hint : String -> String -> String -> Tonkadur.Types.Value
+unsupported_cast_with_hint from to hint =
+   (Tonkadur.Types.StringValue
+      (
+         "Unsupported cast from "
+         ++ from
+         ++ " to "
+         ++ to
+         ++ " (original value was \""
+         ++ hint
+         ++ "\")"
+      )
+   )
+
 cast : (
       Tonkadur.Types.State ->
       String ->
@@ -69,7 +84,8 @@ cast : (
       Tonkadur.Types.Value
    )
 cast state from to param =
-   case (compute state param) of
+   let original_value = (compute state param) in
+   case original_value of
       (Tonkadur.Types.BoolValue bool) ->
          case to of
             "string" ->
@@ -85,7 +101,14 @@ cast state from to param =
                   (Tonkadur.Types.TextValue (Tonkadur.Types.StringText "false"))
 
             "bool" -> (Tonkadur.Types.BoolValue bool)
-            _ -> (unsupported_cast from to)
+            _ ->
+               (Debug.log
+                  (
+                     "Failed cast: "
+                     ++ (Tonkadur.Types.debug_value_to_string original_value)
+                  )
+                  (unsupported_cast from to)
+               )
 
       (Tonkadur.Types.FloatValue float) ->
          case to of
@@ -97,7 +120,14 @@ cast state from to param =
 
             "int" -> (Tonkadur.Types.IntValue (floor float))
             "float" -> (Tonkadur.Types.FloatValue float)
-            _ -> (unsupported_cast from to)
+            _ ->
+               (Debug.log
+                  (
+                     "Failed cast: "
+                     ++ (Tonkadur.Types.debug_value_to_string original_value)
+                  )
+                  (unsupported_cast from to)
+               )
 
       (Tonkadur.Types.IntValue int) ->
          case to of
@@ -110,7 +140,14 @@ cast state from to param =
             "float" -> (Tonkadur.Types.FloatValue (toFloat int))
             "bool" -> (Tonkadur.Types.BoolValue (not (int == 0)))
             "int" -> (Tonkadur.Types.IntValue int)
-            _ -> (unsupported_cast from to)
+            _ ->
+               (Debug.log
+                  (
+                     "Failed cast: "
+                     ++ (Tonkadur.Types.debug_value_to_string original_value)
+                  )
+                  (unsupported_cast from to)
+               )
 
       (Tonkadur.Types.TextValue text_v) ->
          let
@@ -123,12 +160,12 @@ cast state from to param =
             "string" -> (Tonkadur.Types.StringValue as_string)
             "float" ->
                case (String.toFloat as_string) of
-                  Nothing -> (unsupported_cast from to)
+                  Nothing -> (unsupported_cast_with_hint from to as_string)
                   (Just result) -> (Tonkadur.Types.FloatValue result)
 
             "int" ->
                case (String.toInt as_string) of
-                  Nothing -> (unsupported_cast from to)
+                  Nothing -> (unsupported_cast_with_hint from to as_string)
                   (Just result) -> (Tonkadur.Types.IntValue result)
 
             "bool" ->
@@ -137,19 +174,26 @@ cast state from to param =
                )
 
             "text" -> (Tonkadur.Types.TextValue text_v)
-            _ -> (unsupported_cast from to)
+            _ ->
+               (Debug.log
+                  (
+                     "Failed cast: "
+                     ++ (Tonkadur.Types.debug_value_to_string original_value)
+                  )
+                  (unsupported_cast from to)
+               )
 
       (Tonkadur.Types.StringValue string) ->
          case to of
             "string" -> (Tonkadur.Types.StringValue string)
             "float" ->
                case (String.toFloat string) of
-                  Nothing -> (unsupported_cast from to)
+                  Nothing -> (unsupported_cast_with_hint from to string)
                   (Just result) -> (Tonkadur.Types.FloatValue result)
 
             "int" ->
                case (String.toInt string) of
-                  Nothing -> (unsupported_cast from to)
+                  Nothing -> (unsupported_cast_with_hint from to string)
                   (Just result) -> (Tonkadur.Types.IntValue result)
 
             "bool" ->
@@ -160,9 +204,23 @@ cast state from to param =
             "text" ->
                (Tonkadur.Types.TextValue (Tonkadur.Types.StringText string))
 
-            _ -> (unsupported_cast from to)
+            _ ->
+               (Debug.log
+                  (
+                     "Failed cast: "
+                     ++ (Tonkadur.Types.debug_value_to_string original_value)
+                  )
+                  (unsupported_cast from to)
+               )
 
-      _ -> (unsupported_cast from to)
+      _ ->
+         (Debug.log
+            (
+               "Failed cast: "
+               ++ (Tonkadur.Types.debug_value_to_string original_value)
+            )
+            (unsupported_cast from to)
+         )
 
 constant : (
       Tonkadur.Types.State ->
@@ -175,16 +233,18 @@ constant state target_type as_string =
       "string" -> (Tonkadur.Types.StringValue as_string)
       "float" ->
          case (String.toFloat as_string) of
-            Nothing -> (unsupported_cast as_string target_type)
+            Nothing -> (unsupported_cast_with_hint as_string target_type as_string)
             (Just result) -> (Tonkadur.Types.FloatValue result)
 
       "int" ->
          case (String.toInt as_string) of
-            Nothing -> (unsupported_cast as_string target_type)
+            Nothing -> (unsupported_cast_with_hint as_string target_type as_string)
             (Just result) -> (Tonkadur.Types.IntValue result)
 
       "text" ->
          (Tonkadur.Types.TextValue (Tonkadur.Types.StringText as_string))
+
+      "bool" -> (Tonkadur.Types.BoolValue (as_string == "true"))
 
       _ -> (unsupported_cast as_string target_type)
 
@@ -389,7 +449,7 @@ relative_address state base extra =
    (Tonkadur.Types.PointerValue
       (List.append
          (Tonkadur.Types.value_to_address (compute state base))
-         (Tonkadur.Types.value_to_address (compute state extra))
+         [Tonkadur.Types.value_to_string (compute state extra)]
       )
    )
 
@@ -400,7 +460,9 @@ size : (
    )
 size state computation =
    (Tonkadur.Types.IntValue
-      (Dict.size (Tonkadur.Types.value_to_dict (compute state computation)))
+      (Dict.size
+         (Tonkadur.Types.value_to_dict (value_of state computation))
+      )
    )
 
 
@@ -436,8 +498,16 @@ value_of state computation =
          case (Dict.get next_step (Tonkadur.Types.value_to_dict object)) of
             (Just value) -> value
             Nothing ->
-               (Tonkadur.Types.StringValue
-                  "Segmentation Fault (incorrect address)"
+               (Debug.log
+                  (
+                     "No "
+                     ++ next_step
+                     ++ " in "
+                     ++ (Tonkadur.Types.debug_value_to_string object)
+                  )
+                  (Tonkadur.Types.StringValue
+                     "Segmentation Fault (incorrect address)"
+                  )
                )
       )
       (Tonkadur.Types.StructureValue state.memory)
