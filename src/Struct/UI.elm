@@ -94,6 +94,36 @@ clear_prompt ui =
       field_content = ""
    }
 
+display_prompt_content : Type -> Type
+display_prompt_content ui =
+   (display_text (Html.br [] [])
+      (display_text
+         (Html.text ("> " ++ ui.field_content))
+         (display_text (Html.br [] []) ui)
+      )
+   )
+
+display_chosen_option_label : Int -> Type -> Type
+display_chosen_option_label id ui =
+   case
+      (List.filter
+         (\(index, label) -> (index == id))
+         ui.displayed_choices
+      )
+   of
+      [] -> ui
+      ((index, label) :: []) ->
+         (display_text (Html.br [] [])
+            (display_text
+               label
+               (display_text
+                  (Html.text "> ")
+                  (display_text (Html.br [] []) ui)
+               )
+            )
+         )
+      _ -> ui
+
 clear_displayed_texts : Type -> Type
 clear_displayed_texts ui = {ui | displayed_texts = []}
 

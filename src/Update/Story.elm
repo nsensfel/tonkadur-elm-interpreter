@@ -190,6 +190,10 @@ input_string string model =
                (Tonkadur.Types.set_target_from_string
                   string
                   model.tonkadur
+               ),
+            ui =
+               (Struct.UI.clear_prompt
+                  (Struct.UI.display_prompt_content model.ui)
                )
          }
       )
@@ -229,6 +233,10 @@ input_float string model =
                      (Tonkadur.Types.set_target_from_float
                         float
                         model.tonkadur
+                     ),
+                  ui =
+                     (Struct.UI.clear_prompt
+                        (Struct.UI.display_prompt_content model.ui)
                      )
                }
             )
@@ -268,6 +276,10 @@ input_integer string model =
                      (Tonkadur.Types.set_target_from_integer
                         int
                         model.tonkadur
+                     ),
+                  ui =
+                     (Struct.UI.clear_prompt
+                        (Struct.UI.display_prompt_content model.ui)
                      )
                }
             )
@@ -297,6 +309,10 @@ input_command string model =
                (Tonkadur.Types.set_target_from_command
                   (String.words string)
                   model.tonkadur
+               ),
+            ui =
+               (Struct.UI.clear_prompt
+                  (Struct.UI.display_prompt_content model.ui)
                )
          }
       )
@@ -318,7 +334,10 @@ select_choice ix model =
                   model.tonkadur
                )
             ),
-         ui = (Struct.UI.clear_prompt model.ui)
+         ui =
+            (Struct.UI.clear_prompt
+               (Struct.UI.display_chosen_option_label ix model.ui)
+            )
       }
    )
 
@@ -326,7 +345,8 @@ handle_prompt_input : Struct.Model.Type -> Struct.Model.Type
 handle_prompt_input model =
    case model.ui.input of
       Struct.UI.NoInput -> model
-      Struct.UI.FloatInput -> (input_float (Struct.UI.get_field_content model.ui) model)
+      Struct.UI.FloatInput ->
+         (input_float (Struct.UI.get_field_content model.ui) model)
       Struct.UI.IntegerInput ->
          (input_integer (Struct.UI.get_field_content model.ui) model)
       Struct.UI.StringInput ->
